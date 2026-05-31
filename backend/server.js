@@ -22,7 +22,8 @@ app.use((err , req, res , next)=>{
     res.status(500).json({error : 'Something broke!'});
 });
 
-const port =3000;
-app.listen(port, ()=>{
-    console.log(`server is running at ${port}`);
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });
