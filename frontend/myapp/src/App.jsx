@@ -30,14 +30,19 @@ function App() {
 
       setProfile(response.data.data);
     } catch (err) {
-      console.error(err);
+  console.log("FULL ERROR:", err);
 
-      if (err.response?.data?.error) {
-        setError(err.response.data.error);
-      } else {
-        setError('Failed to connect to the server.');
-      }
-    } finally {
+  if (err.response) {
+    console.log("STATUS:", err.response.status);
+    console.log("RESPONSE:", err.response.data);
+
+    setError(
+      JSON.stringify(err.response.data)
+    );
+  } else {
+    setError("Unable to connect to backend");
+  }
+} finally {
       setLoading(false);
     }
   };
