@@ -3,8 +3,8 @@ const db = require('../configurations/db');
 
 const analyzeprofile = async (req, res) => {
     try {
-        console.log('Step 1: Request Received');
-        console.log(req.body);
+        console.log("========== NEW REQUEST ==========");
+        console.log("Request Body:", req.body);
 
         const { username } = req.body;
 
@@ -14,19 +14,19 @@ const analyzeprofile = async (req, res) => {
             });
         }
 
-        console.log('Step 2: Fetching GitHub Profile');
+        console.log("GitHub Token Present:", !!process.env.GITHUB_TOKEN);
 
         const githubResponse = await axios.get(
             `https://api.github.com/users/${username}`,
             {
                 headers: {
-                    'User-Agent': 'GitHub-Profile-Analyzer',
+                    'User-Agent': 'GitHub-Profile-Analyzer-App',
                     Authorization: `Bearer ${process.env.GITHUB_TOKEN}`
                 }
             }
         );
 
-        console.log('Step 3: GitHub Profile Fetched');
+        console.log("GitHub API Success");
 
         const data = githubResponse.data;
 
@@ -53,6 +53,8 @@ const analyzeprofile = async (req, res) => {
             engagement_score: score.toFixed(2)
         };
 
+        console.log("Profile Data:", profileData);
+
         const query = `
             INSERT INTO profiles
             (
@@ -66,19 +68,17 @@ const analyzeprofile = async (req, res) => {
                 engagement_score
             )
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-
             ON DUPLICATE KEY UPDATE
-
-            name = VALUES(name),
-            bio = VALUES(bio),
-            public_repos = VALUES(public_repos),
-            followers = VALUES(followers),
-            following = VALUES(following),
-            avatar_url = VALUES(avatar_url),
-            engagement_score = VALUES(engagement_score)
+                name = VALUES(name),
+                bio = VALUES(bio),
+                public_repos = VALUES(public_repos),
+                followers = VALUES(followers),
+                following = VALUES(following),
+                avatar_url = VALUES(avatar_url),
+                engagement_score = VALUES(engagement_score)
         `;
 
-        const values = [
+        await db.execute(query, [
             profileData.username,
             profileData.name,
             profileData.bio,
@@ -87,42 +87,19 @@ const analyzeprofile = async (req, res) => {
             profileData.following,
             profileData.avatar_url,
             profileData.engagement_score
-        ];
+        ]);
 
-        console.log('Step 4: Saving Profile To Database');
+        console.log("Database Insert Success");
 
-        await db.execute(query, values);
-
-        console.log('Step 5: Profile Saved Successfully');
-
-        return res.status(201).json({
+        return res.status(200).json({
             success: true,
-            message: 'Profile analyzed successfully',
             data: profileData
         });
 
     } catch (error) {
 
-        console.error(' ERROR OCCURRED');
+        console.error("===== ERROR =====");
         console.error(error);
-
-        if (error.response) {
-
-            if (error.response.status === 404) {
-                return res.status(404).json({
-                    error: 'GitHub user not found'
-                });
-            }
-
-            if (
-                error.response.status === 403 ||
-                error.response.status === 429
-            ) {
-                return res.status(429).json({
-                    error: 'GitHub API rate limit exceeded'
-                });
-            }
-        }
 
         return res.status(500).json({
             error: error.message,
@@ -149,7 +126,6 @@ const getprofileByUsername = async (req, res) => {
         }
 
         return res.status(200).json({
-            success: true,
             data: rows[0]
         });
 
