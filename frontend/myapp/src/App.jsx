@@ -18,7 +18,7 @@ function App() {
 
     try {
       // Make sure your backend server.js is running on port 3000!
-      const response = await axios.post('http://localhost:3000/api/analyze', {
+      const response = await axios.post('https://github-profile-analyzer-ln7p.onrender.com', {
         username: username.trim()
       });
       
